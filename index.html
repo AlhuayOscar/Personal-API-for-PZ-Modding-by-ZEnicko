@@ -123,7 +123,9 @@
                 updateSuccess: "Report sent successfully! Thank you.",
                 updateError: "Failed to send: ",
                 globalHelpBtn: "🚨 This API needs an update, Help!!!",
-                cooldownActive: "Please wait 10 seconds before sending another report."
+                cooldownActive: "Please wait 10 seconds before sending another report.",
+                dailyLimit: "Daily limit reached (Max 5/day). Come back tomorrow.",
+                minuteLimit: "Slow down! (Max 5/min)."
             },
             es: {
                 searchPlaceholder: "Buscar clase o paquete...",
@@ -159,7 +161,9 @@
                 updateSuccess: "¡Reporte enviado exitosamente! Gracias.",
                 updateError: "Hubo un error al enviar: ",
                 globalHelpBtn: "🚨 ¡Esta API necesita actualización, Ayuda!!!",
-                cooldownActive: "Por favor, espera 10 segundos antes de enviar otro reporte."
+                cooldownActive: "Por favor, espera 10 segundos antes de enviar otro reporte.",
+                dailyLimit: "Límite diario alcanzado (Max 5/día). Vuelve mañana.",
+                minuteLimit: "¡Más despacio! (Max 5/min)."
             }
         };
 
@@ -356,10 +360,38 @@
             }
         }
 
+        async function checkRateLimitAndGetIP() {
+            let history = JSON.parse(localStorage.getItem('api_report_history') || '[]');
+            const now = Date.now();
+            history = history.filter(time => now - time < 86400000); // 24 hours
+            if (history.length >= 5) return { ok: false, msg: i18n[currentLang].dailyLimit };
+            
+            const lastMinute = history.filter(time => now - time < 60000);
+            if (lastMinute.length >= 5) return { ok: false, msg: i18n[currentLang].minuteLimit };
+            
+            let userIP = "Unknown";
+            try {
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                if (ipRes.ok) {
+                    const ipData = await ipRes.json();
+                    userIP = ipData.ip;
+                }
+            } catch(e) {}
+            return { ok: true, ip: userIP };
+        }
+
+        function saveRateLimit() {
+            let history = JSON.parse(localStorage.getItem('api_report_history') || '[]');
+            const now = Date.now();
+            history = history.filter(time => now - time < 86400000);
+            history.push(now);
+            localStorage.setItem('api_report_history', JSON.stringify(history));
+        }
+
         async function submitGlobalUpdate() {
-            const lastUpdate = localStorage.getItem('last_api_update_time');
-            if (lastUpdate && (Date.now() - parseInt(lastUpdate)) < 10000) {
-                alert(i18n[currentLang].cooldownActive);
+            const rateCheck = await checkRateLimitAndGetIP();
+            if (!rateCheck.ok) {
+                alert(rateCheck.msg);
                 return;
             }
 
@@ -368,6 +400,13 @@
             btn.style.opacity = '0.5';
             btn.style.cursor = 'not-allowed';
             try {
+                const payload = { 
+                    project_name: 'PZ_API_Doc',
+                    class_name: 'GLOBAL_API_UPDATE', 
+                    comment: 'User clicked the Global Update Help Button',
+                    user_ip: rateCheck.ip
+                };
+
                 const response = await fetch(SUPABASE_URL, {
                     method: 'POST',
                     headers: {
@@ -376,27 +415,19 @@
                         'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
                         'Prefer': 'return=minimal'
                     },
-                    body: JSON.stringify({ 
-                        project_name: 'PZ_API_Doc',
-                        class_name: 'GLOBAL_API_UPDATE', 
-                        comment: 'User clicked the Global Update Help Button' 
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 // Trigger Make.com Webhook with the payload
                 fetch('https://hook.us2.make.com/xues0f2xu326atn86rksa6f8a100vk4v', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        project_name: 'PZ_API_Doc',
-                        class_name: 'GLOBAL_API_UPDATE', 
-                        comment: 'User clicked the Global Update Help Button' 
-                    })
+                    body: JSON.stringify(payload)
                 }).catch(e => console.error("Webhook error:", e));
 
                 if (response.ok) {
                     fetchUpdateCount();
-                    localStorage.setItem('last_api_update_time', Date.now().toString());
+                    saveRateLimit();
                     alert(i18n[currentLang].updateSuccess);
                 } else {
                     alert(i18n[currentLang].updateError + response.statusText);
@@ -420,9 +451,9 @@
                 return;
             }
 
-            const lastUpdate = localStorage.getItem('last_api_update_time');
-            if (lastUpdate && (Date.now() - parseInt(lastUpdate)) < 10000) {
-                msgObj.innerText = i18n[currentLang].cooldownActive;
+            const rateCheck = await checkRateLimitAndGetIP();
+            if (!rateCheck.ok) {
+                msgObj.innerText = rateCheck.msg;
                 msgObj.style.color = '#feca57';
                 return;
             }
@@ -437,6 +468,13 @@
                 msgObj.innerText = i18n[currentLang].updateSending;
                 msgObj.style.color = '#feca57';
 
+                const payload = { 
+                    project_name: 'PZ_API_Doc',
+                    class_name: className, 
+                    comment: comment,
+                    user_ip: rateCheck.ip
+                };
+
                 const response = await fetch(SUPABASE_URL, {
                     method: 'POST',
                     headers: {
@@ -445,29 +483,21 @@
                         'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
                         'Prefer': 'return=minimal'
                     },
-                    body: JSON.stringify({ 
-                        project_name: 'PZ_API_Doc',
-                        class_name: className, 
-                        comment: comment 
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 // Trigger Make.com Webhook with the payload
                 fetch('https://hook.us2.make.com/xues0f2xu326atn86rksa6f8a100vk4v', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        project_name: 'PZ_API_Doc',
-                        class_name: className, 
-                        comment: comment 
-                    })
+                    body: JSON.stringify(payload)
                 }).catch(e => console.error("Webhook error:", e));
 
                 if (response.ok) {
                     msgObj.innerText = i18n[currentLang].updateSuccess;
                     msgObj.style.color = '#1dd1a1';
                     document.getElementById('updateComment').value = "";
-                    localStorage.setItem('last_api_update_time', Date.now().toString());
+                    saveRateLimit();
                 } else {
                     msgObj.innerText = i18n[currentLang].updateError + response.statusText;
                     msgObj.style.color = '#ff6b6b';
