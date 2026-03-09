@@ -326,7 +326,7 @@
                 <p style="font-size: 0.9em; color: gray; margin-bottom: 15px; margin-top: 5px;">${loc.updateDesc}</p>
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <input type="text" id="updateComment" placeholder="${loc.updatePlaceholder}" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--input-text);">
-                    <button class="btn" style="background: var(--accent); color: white;" onclick="submitUpdate('${cls.class}')">${loc.updateBtn}</button>
+                    <button class="btn" id="classUpdateBtn" style="background: var(--accent); color: white;" onclick="submitUpdate('${cls.class}')">${loc.updateBtn}</button>
                 </div>
                 <div id="updateMsg" style="font-size: 0.85em; margin-top: 5px;"></div>
             </div>`;
@@ -512,6 +512,46 @@
         searchInput.addEventListener('input', (e) => renderSidebar(e.target.value));
         renderSidebar();
         fetchUpdateCount();
+
+        function updateCooldownUI() {
+            let history = JSON.parse(localStorage.getItem('api_report_history') || '[]');
+            const now = Date.now();
+            let disabled = false;
+            let text = "";
+
+            history = history.filter(time => now - time < 86400000);
+            if (history.length >= 5) {
+                disabled = true;
+                text = "Max 5/day";
+            } else if (history.length > 0) {
+                const last = history[history.length - 1];
+                if (now - last < 60000) {
+                    disabled = true;
+                    const wait = Math.ceil((60000 - (now - last)) / 1000);
+                    text = wait + "s";
+                }
+            }
+
+            const gBtn = document.getElementById('globalHelpBtn');
+            if (gBtn) {
+                gBtn.disabled = disabled;
+                gBtn.style.opacity = disabled ? '0.5' : '1';
+                gBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+                const baseText = i18n[currentLang].globalHelpBtn;
+                document.getElementById('globalHelpText').innerText = disabled ? (baseText + " (" + text + ")") : baseText;
+            }
+
+            const cBtn = document.getElementById('classUpdateBtn');
+            if (cBtn) {
+                cBtn.disabled = disabled;
+                cBtn.style.opacity = disabled ? '0.5' : '1';
+                cBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+                cBtn.innerText = disabled ? text : i18n[currentLang].updateBtn;
+            }
+        }
+
+        setInterval(updateCooldownUI, 1000);
+        updateCooldownUI();
     </script>
 </body>
 </html>
