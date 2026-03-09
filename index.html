@@ -400,10 +400,14 @@
             btn.style.opacity = '0.5';
             btn.style.cursor = 'not-allowed';
             try {
-                const payload = { 
+                const dbPayload = { 
                     project_name: 'PZ_API_Doc',
                     class_name: 'GLOBAL_API_UPDATE', 
-                    comment: 'User clicked the Global Update Help Button',
+                    comment: 'User clicked the Global Update Help Button'
+                };
+
+                const makePayload = {
+                    ...dbPayload,
                     user_ip: rateCheck.ip
                 };
 
@@ -415,14 +419,14 @@
                         'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
                         'Prefer': 'return=minimal'
                     },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(dbPayload)
                 });
 
                 // Trigger Make.com Webhook with the payload
                 fetch('https://hook.us2.make.com/xues0f2xu326atn86rksa6f8a100vk4v', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(makePayload)
                 }).catch(e => console.error("Webhook error:", e));
 
                 if (response.ok) {
@@ -468,10 +472,14 @@
                 msgObj.innerText = i18n[currentLang].updateSending;
                 msgObj.style.color = '#feca57';
 
-                const payload = { 
+                const dbPayload = { 
                     project_name: 'PZ_API_Doc',
                     class_name: className, 
-                    comment: comment,
+                    comment: comment
+                };
+
+                const makePayload = {
+                    ...dbPayload,
                     user_ip: rateCheck.ip
                 };
 
@@ -483,14 +491,14 @@
                         'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
                         'Prefer': 'return=minimal'
                     },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(dbPayload)
                 });
 
                 // Trigger Make.com Webhook with the payload
                 fetch('https://hook.us2.make.com/xues0f2xu326atn86rksa6f8a100vk4v', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(makePayload)
                 }).catch(e => console.error("Webhook error:", e));
 
                 if (response.ok) {
