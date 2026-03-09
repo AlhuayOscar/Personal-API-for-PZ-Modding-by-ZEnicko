@@ -68,6 +68,10 @@
     </div>
     <div id="content">
         <div class="top-bar">
+            <button class="btn" id="globalHelpBtn" onclick="submitGlobalUpdate()" style="background: #ff4757; color: white; border-color: #ff4757; display: flex; align-items: center; gap: 5px;" title="Click to request a general update for this whole API!">
+                <span id="globalHelpText">🚨 This API needs an update, Help!!!</span> 
+                <span id="globalUpdateCount" style="background: white; color: #ff4757; padding: 2px 6px; border-radius: 10px; font-size: 0.85em; font-weight: bold;">0</span>
+            </button>
             <button class="btn" id="themeToggle" onclick="toggleTheme()">☀️ Light Theme</button>
             <button class="btn" id="langToggle" onclick="toggleLang()">🇪🇸 Español</button>
         </div>
@@ -117,7 +121,8 @@
                 updateEmpty: "Please enter a comment.",
                 updateSending: "Sending...",
                 updateSuccess: "Report sent successfully! Thank you.",
-                updateError: "Failed to send: "
+                updateError: "Failed to send: ",
+                globalHelpBtn: "🚨 This API needs an update, Help!!!"
             },
             es: {
                 searchPlaceholder: "Buscar clase o paquete...",
@@ -151,7 +156,8 @@
                 updateEmpty: "Por favor, ingresa un comentario.",
                 updateSending: "Enviando...",
                 updateSuccess: "¡Reporte enviado exitosamente! Gracias.",
-                updateError: "Hubo un error al enviar: "
+                updateError: "Hubo un error al enviar: ",
+                globalHelpBtn: "🚨 ¡Esta API necesita actualización, Ayuda!!!"
             }
         };
 
@@ -177,6 +183,7 @@
             document.getElementById('searchInput').placeholder = i18n[currentLang].searchPlaceholder;
             document.getElementById('strDesc').innerText = i18n[currentLang].selectPrompt;
             document.getElementById('strGameVer').innerText = i18n[currentLang].gameVersion;
+            document.getElementById('globalHelpText').innerText = i18n[currentLang].globalHelpBtn;
 
             if (currentClassView) {
                 showClassDetails(currentClassView.pkg, currentClassView.cls);
@@ -325,6 +332,64 @@
         const SUPABASE_URL = "https://fkzoxzelfwfrutwqkmli.supabase.co/rest/v1/update_requests"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrem94emVsZndmcnV0d3FrbWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNzk1MjEsImV4cCI6MjA4ODY1NTUyMX0.hvzB60McTFmw4wDYHRjcKVVggPmV9xEklT95EQwj4uI";
 
+        async function fetchUpdateCount() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}?project_name=eq.PZ_API_Doc`, {
+                    method: 'HEAD',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                        'Prefer': 'count=exact'
+                    }
+                });
+                if (response.ok) {
+                    const range = response.headers.get('content-range');
+                    if (range) {
+                        const total = range.split('/')[1];
+                        document.getElementById('globalUpdateCount').innerText = total;
+                    }
+                }
+            } catch(e) {
+                console.error("Fetch count error:", e);
+            }
+        }
+
+        async function submitGlobalUpdate() {
+            const btn = document.getElementById('globalHelpBtn');
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+            try {
+                const response = await fetch(SUPABASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({ 
+                        project_name: 'PZ_API_Doc',
+                        class_name: 'GLOBAL_API_UPDATE', 
+                        comment: 'User clicked the Global Update Help Button' 
+                    })
+                });
+
+                if (response.ok) {
+                    fetchUpdateCount();
+                    alert(i18n[currentLang].updateSuccess);
+                } else {
+                    alert(i18n[currentLang].updateError + response.statusText);
+                }
+            } catch(e) {
+                console.error(e);
+                alert(i18n[currentLang].updateError + e.message);
+            }
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        }
+
         async function submitUpdate(className) {
             const comment = document.getElementById('updateComment').value;
             const msgObj = document.getElementById('updateMsg');
@@ -377,6 +442,7 @@
 
         searchInput.addEventListener('input', (e) => renderSidebar(e.target.value));
         renderSidebar();
+        fetchUpdateCount();
     </script>
 </body>
 </html>
