@@ -122,7 +122,8 @@
                 updateSending: "Sending...",
                 updateSuccess: "Report sent successfully! Thank you.",
                 updateError: "Failed to send: ",
-                globalHelpBtn: "🚨 This API needs an update, Help!!!"
+                globalHelpBtn: "🚨 This API needs an update, Help!!!",
+                cooldownActive: "Please wait 10 seconds before sending another report."
             },
             es: {
                 searchPlaceholder: "Buscar clase o paquete...",
@@ -157,7 +158,8 @@
                 updateSending: "Enviando...",
                 updateSuccess: "¡Reporte enviado exitosamente! Gracias.",
                 updateError: "Hubo un error al enviar: ",
-                globalHelpBtn: "🚨 ¡Esta API necesita actualización, Ayuda!!!"
+                globalHelpBtn: "🚨 ¡Esta API necesita actualización, Ayuda!!!",
+                cooldownActive: "Por favor, espera 10 segundos antes de enviar otro reporte."
             }
         };
 
@@ -355,6 +357,12 @@
         }
 
         async function submitGlobalUpdate() {
+            const lastUpdate = localStorage.getItem('last_api_update_time');
+            if (lastUpdate && (Date.now() - parseInt(lastUpdate)) < 10000) {
+                alert(i18n[currentLang].cooldownActive);
+                return;
+            }
+
             const btn = document.getElementById('globalHelpBtn');
             btn.disabled = true;
             btn.style.opacity = '0.5';
@@ -388,6 +396,7 @@
 
                 if (response.ok) {
                     fetchUpdateCount();
+                    localStorage.setItem('last_api_update_time', Date.now().toString());
                     alert(i18n[currentLang].updateSuccess);
                 } else {
                     alert(i18n[currentLang].updateError + response.statusText);
@@ -408,6 +417,13 @@
             if (!comment.trim()) {
                 msgObj.innerText = i18n[currentLang].updateEmpty;
                 msgObj.style.color = '#ff6b6b';
+                return;
+            }
+
+            const lastUpdate = localStorage.getItem('last_api_update_time');
+            if (lastUpdate && (Date.now() - parseInt(lastUpdate)) < 10000) {
+                msgObj.innerText = i18n[currentLang].cooldownActive;
+                msgObj.style.color = '#feca57';
                 return;
             }
 
@@ -451,6 +467,7 @@
                     msgObj.innerText = i18n[currentLang].updateSuccess;
                     msgObj.style.color = '#1dd1a1';
                     document.getElementById('updateComment').value = "";
+                    localStorage.setItem('last_api_update_time', Date.now().toString());
                 } else {
                     msgObj.innerText = i18n[currentLang].updateError + response.statusText;
                     msgObj.style.color = '#ff6b6b';
