@@ -353,7 +353,11 @@
                         'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
                         'Prefer': 'return=minimal'
                     },
-                    body: JSON.stringify({ class_name: className, comment: comment })
+                    body: JSON.stringify({ 
+                        project_name: 'PZ_API_Doc',
+                        class_name: className, 
+                        comment: comment 
+                    })
                 });
 
                 if (response.ok) {
