@@ -375,6 +375,17 @@
                     })
                 });
 
+                // Trigger Make.com Webhook with the payload
+                fetch('https://hook.us2.make.com/xues0f2xu326atn86rksa6f8a100vk4v', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        project_name: 'PZ_API_Doc',
+                        class_name: 'GLOBAL_API_UPDATE', 
+                        comment: 'User clicked the Global Update Help Button' 
+                    })
+                }).catch(e => console.error("Webhook error:", e));
+
                 if (response.ok) {
                     fetchUpdateCount();
                     alert(i18n[currentLang].updateSuccess);
@@ -424,6 +435,17 @@
                         comment: comment 
                     })
                 });
+
+                // Trigger Make.com Webhook with the payload
+                fetch('https://hook.us2.make.com/xues0f2xu326atn86rksa6f8a100vk4v', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        project_name: 'PZ_API_Doc',
+                        class_name: className, 
+                        comment: comment 
+                    })
+                }).catch(e => console.error("Webhook error:", e));
 
                 if (response.ok) {
                     msgObj.innerText = i18n[currentLang].updateSuccess;
