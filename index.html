@@ -25,6 +25,9 @@
         .method-name { color: #dcdcaa; font-weight: bold; }
         .field-name { color: #9cdcfe; font-weight: bold; }
         .keyword { color: #569cd6; }
+        .pkg-link { color: #569cd6; cursor: pointer; text-decoration: none; }
+        .pkg-link:hover { text-decoration: underline; }
+        .example-box { margin-top: 15px; margin-bottom: 20px; background: #1e1e1e; padding: 15px; border: 1px solid #3c3c3c; border-left: 4px solid #569cd6; border-radius: 4px; font-family: Consolas, 'Courier New', monospace; font-size: 0.9em; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
@@ -49,6 +52,11 @@
         const packageList = document.getElementById('packageList');
         const searchInput = document.getElementById('searchInput');
         const classDetails = document.getElementById('classDetails');
+
+        function setSearch(val) {
+            searchInput.value = val;
+            renderSidebar(val);
+        }
 
         function renderSidebar(filter = '') {
             packageList.innerHTML = '';
@@ -96,8 +104,28 @@
         }
 
         function showClassDetails(pkg, cls) {
-            let html = `<h2><span class="keyword">${pkg}</span>.<span style="color:#4ec9b0">${cls.class}</span></h2>`;
+            const pkgParts = pkg.split('.');
+            let pkgHtml = '';
+            let currentPath = '';
+            pkgParts.forEach((part, index) => {
+                currentPath += (index > 0 ? '.' : '') + part;
+                pkgHtml += `<span class="pkg-link" onclick="setSearch('${currentPath}')">${part}</span>`;
+                if (index < pkgParts.length - 1) pkgHtml += '<span class="keyword">.</span>';
+            });
+
+            let html = `<h2>${pkgHtml}<span class="keyword">.</span><span style="color:#4ec9b0">${cls.class}</span></h2>`;
             
+            // Generic Usage Example
+            html += `<div class="example-box">
+                <strong style="color: #dcdcaa; font-size: 1.1em;">PZ Modding Context &amp; Basic Usage:</strong><br><br>
+                <span style="color: #6a9955">-- En Lua (Project Zomboid scripts), este elemento (clase, interfaz o enum) podría instanciarse o utilizarse típicamente así:</span><br>
+                <span style="color: #c586c0">local</span> my${cls.class} = <span style="color: #4ec9b0">${cls.class}</span>.<span style="color: #dcdcaa">new</span>() <span style="color: #6a9955">-- Para crear una nueva instancia (si no es estático)</span><br>
+                <span style="color: #6a9955">-- O referenciándose de manera estática directamente por su nombre:</span><br>
+                <span style="color: #c586c0">local</span> val = <span style="color: #4ec9b0">${cls.class}</span>.AlgunMetodo()<br><br>
+                <span style="color: #6a9955">-- 🔥 Tip: Busca en los archivos Lua originales y comunitarios referencias a la palabra:</span><br>
+                <span style="color: #ce9178">"${cls.class}"</span> <span style="color: #6a9955">para ver cómo otros mods o los desarrolladores le dan uso hoy en día.</span>
+            </div>`;
+
             if (cls.extends && cls.extends.length > 0 && cls.extends[0] !== "") {
                 html += `<p><span class="keyword">extends</span> ${cls.extends.map(e => linkifyType(e)).join(', ')}</p>`;
             }
