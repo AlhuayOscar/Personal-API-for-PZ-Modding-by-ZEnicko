@@ -102,7 +102,14 @@
                 noFieldsMethods: "No public fields or methods found.",
                 lightModeToggle: "☀️ Light Theme",
                 darkModeToggle: "🌙 Dark Theme",
-                langToggleStr: "🇪🇸 Español"
+                langToggleStr: "🇪🇸 Español",
+                ideaTitle: "Modding Ideas & Potential Uses:",
+                ideaZombie: "You could modify zombie behavior, change their stats, alter spawning mechanics, or create custom zombie variants.",
+                ideaItem: "You can create custom items, modify loot distributions, change item durability, or adjust inventory weight capacities.",
+                ideaMap: "You could alter world generation, change tile properties, create custom map markers, or manipulate map cell data.",
+                ideaVehicle: "You could modify car physics, change vehicle parts, alter engine performance, or add entirely new car types.",
+                ideaCharacter: "Modify player stats, add custom traits, change leveling mechanics, alter character animations, or manipulate health/damage.",
+                ideaDefault: "Extend this class to add custom mechanics, intercept its methods to change default PZ behavior, or read its fields to create dynamic UI elements."
             },
             es: {
                 searchPlaceholder: "Buscar clase o paquete...",
@@ -121,7 +128,14 @@
                 noFieldsMethods: "No se encontraron campos o métodos públicos.",
                 lightModeToggle: "☀️ Modo Claro",
                 darkModeToggle: "🌙 Modo Oscuro",
-                langToggleStr: "🇬🇧 English"
+                langToggleStr: "🇬🇧 English",
+                ideaTitle: "Ideas de Modding y Posibles Usos:",
+                ideaZombie: "Podrías modificar el comportamiento de los zombis, cambiar sus estadísticas, alterar su aparición o crear variantes personalizadas.",
+                ideaItem: "Puedes crear ítems personalizados, modificar las tablas de botín (loot), cambiar la durabilidad de los objetos o ajustar el peso del inventario.",
+                ideaMap: "Podrías alterar la generación del mundo, cambiar propiedades de casillas (tiles), crear marcadores personalizados en el mapa o manipular celdas de terreno.",
+                ideaVehicle: "Podrías modificar la física de los vehículos, cambiar partes mecánicas, alterar el rendimiento del motor o añadir tipos de autos completamente nuevos.",
+                ideaCharacter: "Modifica las estadísticas del jugador, añade rasgos personalizados, cambia las mecánicas de nivel, o manipula la salud y el daño.",
+                ideaDefault: "Extiende esta clase para añadir mecánicas personalizadas, intercepta sus métodos para cambiar el comportamiento por defecto de PZ, o lee sus variables para crear interfaces dinámicas basadas en su estado."
             }
         };
 
@@ -225,6 +239,20 @@
                 <span style="color: #c586c0">local</span> val = <span style="color: var(--type-color)">${cls.class}</span>.SomeMethod()<br><br>
                 <span style="color: #6a9955">${loc.exampleLine4}</span><br>
                 <span style="color: #ce9178">"${cls.class}"</span> <span style="color: #6a9955">${loc.exampleLine5}</span>
+            </div>`;
+
+            // Idea Heuristics based on name
+            let ideaText = loc.ideaDefault;
+            const upName = cls.class.toUpperCase();
+            if (upName.includes("ZOMBIE")) ideaText = loc.ideaZombie;
+            else if (upName.includes("ITEM") || upName.includes("INVENTORY") || upName.includes("LOOT")) ideaText = loc.ideaItem;
+            else if (upName.includes("MAP") || upName.includes("SQUARE") || upName.includes("CELL") || upName.includes("TILE")) ideaText = loc.ideaMap;
+            else if (upName.includes("VEHICLE") || upName.includes("CAR")) ideaText = loc.ideaVehicle;
+            else if (upName.includes("CHARACTER") || upName.includes("PLAYER") || upName.includes("SURVIVOR")) ideaText = loc.ideaCharacter;
+
+            html += `<div class="example-box" style="border-left-color: var(--type-color); margin-top: 0;">
+                <strong style="color: var(--type-color); font-size: 1.1em;">💡 ${loc.ideaTitle}</strong><br><br>
+                <span style="color: var(--text-color)">${ideaText}</span>
             </div>`;
 
             if (cls.extends && cls.extends.length > 0 && cls.extends[0] !== "") {
