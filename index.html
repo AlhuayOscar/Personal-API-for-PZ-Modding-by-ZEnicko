@@ -109,7 +109,15 @@
                 ideaMap: "You could alter world generation, change tile properties, create custom map markers, or manipulate map cell data.",
                 ideaVehicle: "You could modify car physics, change vehicle parts, alter engine performance, or add entirely new car types.",
                 ideaCharacter: "Modify player stats, add custom traits, change leveling mechanics, alter character animations, or manipulate health/damage.",
-                ideaDefault: "Extend this class to add custom mechanics, intercept its methods to change default PZ behavior, or read its fields to create dynamic UI elements."
+                ideaDefault: "Extend this class to add custom mechanics, intercept its methods to change default PZ behavior, or read its fields to create dynamic UI elements.",
+                updateTitle: "Need to update this class?",
+                updateDesc: "Leave an optional comment so ZEnicko knows what has changed or needs to be revised.",
+                updatePlaceholder: "E.g. Method signature changed in 42.X...",
+                updateBtn: "Report Issue",
+                updateEmpty: "Please enter a comment.",
+                updateSending: "Sending...",
+                updateSuccess: "Report sent successfully! Thank you.",
+                updateError: "Failed to send: "
             },
             es: {
                 searchPlaceholder: "Buscar clase o paquete...",
@@ -135,7 +143,15 @@
                 ideaMap: "Podrías alterar la generación del mundo, cambiar propiedades de casillas (tiles), crear marcadores personalizados en el mapa o manipular celdas de terreno.",
                 ideaVehicle: "Podrías modificar la física de los vehículos, cambiar partes mecánicas, alterar el rendimiento del motor o añadir tipos de autos completamente nuevos.",
                 ideaCharacter: "Modifica las estadísticas del jugador, añade rasgos personalizados, cambia las mecánicas de nivel, o manipula la salud y el daño.",
-                ideaDefault: "Extiende esta clase para añadir mecánicas personalizadas, intercepta sus métodos para cambiar el comportamiento por defecto de PZ, o lee sus variables para crear interfaces dinámicas basadas en su estado."
+                ideaDefault: "Extiende esta clase para añadir mecánicas personalizadas, intercepta sus métodos para cambiar el comportamiento por defecto de PZ, o lee sus variables para crear interfaces dinámicas basadas en su estado.",
+                updateTitle: "¿Necesita actualización esta clase?",
+                updateDesc: "Deja un comentario para que ZEnicko sepa qué ha cambiado o necesita revisión.",
+                updatePlaceholder: "Ej. La firma del método cambió en la 42.X...",
+                updateBtn: "Reportar Problema",
+                updateEmpty: "Por favor, ingresa un comentario.",
+                updateSending: "Enviando...",
+                updateSuccess: "¡Reporte enviado exitosamente! Gracias.",
+                updateError: "Hubo un error al enviar: "
             }
         };
 
@@ -289,7 +305,70 @@
             } else if (!cls.fields || cls.fields.length === 0) {
                 html += `<p>${loc.noFieldsMethods}</p>`;
             }
+            
+            // Add Needs Update Section
+            html += `<hr style="border-top: 1px dashed var(--border-color); border-bottom: none; margin-top: 30px;">
+            <div style="margin-top: 20px; padding: 15px; background: var(--bg-color); border-radius: 4px; border: 1px solid var(--border-color);">
+                <strong style="color: var(--text-color);">${loc.updateTitle}</strong>
+                <p style="font-size: 0.9em; color: gray; margin-bottom: 15px; margin-top: 5px;">${loc.updateDesc}</p>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="updateComment" placeholder="${loc.updatePlaceholder}" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--input-text);">
+                    <button class="btn" style="background: var(--accent); color: white;" onclick="submitUpdate('${cls.class}')">${loc.updateBtn}</button>
+                </div>
+                <div id="updateMsg" style="font-size: 0.85em; margin-top: 5px;"></div>
+            </div>`;
+
             classDetails.innerHTML = html;
+        }
+
+        // ----- DB Configuration -----
+        const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE/rest/v1/update_requests"; 
+        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
+
+        async function submitUpdate(className) {
+            const comment = document.getElementById('updateComment').value;
+            const msgObj = document.getElementById('updateMsg');
+            
+            if (!comment.trim()) {
+                msgObj.innerText = i18n[currentLang].updateEmpty;
+                msgObj.style.color = '#ff6b6b';
+                return;
+            }
+
+            if (SUPABASE_URL.includes("YOUR_SUPABASE_URL")) {
+                msgObj.innerText = "Developer Error: Database credentials missing in the code.";
+                msgObj.style.color = '#ff6b6b';
+                return;
+            }
+            
+            try {
+                msgObj.innerText = i18n[currentLang].updateSending;
+                msgObj.style.color = '#feca57';
+
+                const response = await fetch(SUPABASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({ class_name: className, comment: comment })
+                });
+
+                if (response.ok) {
+                    msgObj.innerText = i18n[currentLang].updateSuccess;
+                    msgObj.style.color = '#1dd1a1';
+                    document.getElementById('updateComment').value = "";
+                } else {
+                    msgObj.innerText = i18n[currentLang].updateError + response.statusText;
+                    msgObj.style.color = '#ff6b6b';
+                }
+            } catch(e) {
+                console.error(e);
+                msgObj.innerText = i18n[currentLang].updateError + e.message;
+                msgObj.style.color = '#ff6b6b';
+            }
         }
 
         searchInput.addEventListener('input', (e) => renderSidebar(e.target.value));
